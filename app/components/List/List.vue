@@ -1,11 +1,22 @@
 <template>
   <div class="p-4 h-screen flex flex-col">
+    <!--  header list -->
+    <div class="mb-4">
+      <div class="flex gap-2 items-center -mt-[4px]">
+        <TagIcon class="w-5 h-5 text-gray-600" />
+        <h1 class="text-lg font-bold">My List</h1>
+      </div>
+      <div class="text-[11px] text-gray-500 pl-[30px]">
+        {{ tasks.length }} {{ tasks.length === 1 ? "task" : "tasks" }}
+      </div>
+    </div>
+
     <!--  todo list -->
     <ul class="text-sm">
       <li
         v-for="task in tasks"
         :key="task.id"
-        class="py-2 border-b border-gray-100"
+        class="py-2 border-b border-gray-100 flex items-center"
       >
         <input
           type="checkbox"
@@ -38,7 +49,10 @@
 </template>
 
 <script setup>
-import { PlusCircleIcon as PlusCircleIconSolid } from "@heroicons/vue/24/solid";
+import {
+  PlusCircleIcon as PlusCircleIconSolid,
+  TagIcon,
+} from "@heroicons/vue/24/outline";
 
 const tasks = ref([]);
 

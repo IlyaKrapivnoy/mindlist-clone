@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between text-[11px] text-gray-500">
+  <div class="flex items-center justify-between text-[11px] text-gray-500">
     <div class="uppercase">{{ currentDay }}</div>
     <div>
       <Cog8ToothIcon

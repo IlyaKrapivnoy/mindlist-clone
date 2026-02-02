@@ -1,6 +1,7 @@
 <template>
   <div>
     <SidebarHeaderTop />
+    <SidebarHeaderBottom />
   </div>
 </template>
 
