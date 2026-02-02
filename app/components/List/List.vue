@@ -4,7 +4,7 @@
     <div class="mb-4">
       <div class="flex gap-2 items-center -mt-[4px]">
         <TagIcon class="w-5 h-5 text-gray-600" />
-        <h1 class="text-lg font-bold">My List</h1>
+        <h1 class="text-lg font-bold">{{ currentList.name }}</h1>
       </div>
       <div class="text-[11px] text-gray-500 pl-[30px]">
         {{ tasks.length }} {{ tasks.length === 1 ? "task" : "tasks" }}
@@ -55,24 +55,32 @@ import {
 } from "@heroicons/vue/24/outline";
 
 const tasks = ref([]);
+const currentList = ref({ id: "my-list", name: "My List" });
 
 onMounted(() => {
-  const savedTasks = localStorage.getItem("tasks");
-  if (savedTasks) {
-    tasks.value = JSON.parse(savedTasks);
-  } else {
-    tasks.value = [
-      { id: 1, text: "Learn Polish", completed: false },
-      { id: 2, text: "Go to the gym", completed: true },
-      { id: 3, text: "Go to the swimming pool", completed: false },
-    ];
+  const savedLists = localStorage.getItem("lists");
+  if (savedLists) {
+    const lists = JSON.parse(savedLists);
+    const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
+    if (savedTasks) {
+      tasks.value = JSON.parse(savedTasks);
+    } else {
+      tasks.value = [
+        { id: 1, text: "Learn Polish", completed: false },
+        { id: 2, text: "Go to the gym", completed: true },
+        { id: 3, text: "Go to the swimming pool", completed: false },
+      ];
+    }
   }
 });
 
 watch(
   tasks,
   (newTasks) => {
-    localStorage.setItem("tasks", JSON.stringify(newTasks));
+    localStorage.setItem(
+      `tasks_${currentList.value.id}`,
+      JSON.stringify(newTasks),
+    );
   },
   { deep: true },
 );
