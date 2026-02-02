@@ -12,7 +12,21 @@
     </div>
 
     <!--  todo list -->
-    <ul class="text-sm">
+    <div
+      v-if="sortedTasks.length === 0"
+      class="flex-1 flex flex-col items-center justify-center"
+    >
+      <img
+        src="/assets/images/no_result.png"
+        alt="No tasks"
+        class="max-w-[640px] h-auto"
+      />
+      <div class="text-center text-xs">
+        <p class="text-black font-bold mt-2">It's empty so far</p>
+        <p class="text-gray-500 mt-2">Let's add a new task</p>
+      </div>
+    </div>
+    <ul v-else class="text-sm">
       <li
         v-for="task in sortedTasks"
         :key="task.id"
@@ -53,6 +67,9 @@ import {
   PlusCircleIcon as PlusCircleIconSolid,
   TagIcon,
 } from "@heroicons/vue/24/outline";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const tasks = ref([]);
 const currentList = ref({ id: "my-list", name: "My List" });
@@ -73,19 +90,28 @@ const sortedTasks = computed(() => {
 });
 
 onMounted(() => {
+  const listId = route.params.id || "my-list";
+
   const savedLists = localStorage.getItem("lists");
   if (savedLists) {
     const lists = JSON.parse(savedLists);
-    const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
-    if (savedTasks) {
-      tasks.value = JSON.parse(savedTasks);
-    } else {
-      tasks.value = [
-        { id: 1, text: "Learn Polish", completed: false },
-        { id: 2, text: "Go to the gym", completed: true },
-        { id: 3, text: "Go to the swimming pool", completed: false },
-      ];
+    const list = lists.find((l) => l.id === listId);
+    if (list) {
+      currentList.value = list;
     }
+  }
+
+  const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
+  if (savedTasks) {
+    tasks.value = JSON.parse(savedTasks);
+  } else if (currentList.value.id === "my-list") {
+    tasks.value = [
+      { id: 1, text: "Learn Polish", completed: false },
+      { id: 2, text: "Go to the gym", completed: true },
+      { id: 3, text: "Go to the swimming pool", completed: false },
+    ];
+  } else {
+    tasks.value = [];
   }
 });
 
