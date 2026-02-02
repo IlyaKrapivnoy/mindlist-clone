@@ -1,5 +1,0 @@
-<template>
-  <div class="p-4">
-    <h2>List</h2>
-  </div>
-</template>
