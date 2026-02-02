@@ -14,7 +14,7 @@
     <!--  todo list -->
     <ul class="text-sm">
       <li
-        v-for="task in tasks"
+        v-for="task in sortedTasks"
         :key="task.id"
         class="py-2 border-b border-gray-100 flex items-center"
       >
@@ -57,6 +57,21 @@ import {
 const tasks = ref([]);
 const currentList = ref({ id: "my-list", name: "My List" });
 
+const sortedTasks = computed(() => {
+  return [...tasks.value].sort((a, b) => {
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    if (a.completed && b.completed) {
+      return (a.completedAt || 0) - (b.completedAt || 0);
+    }
+    if (!a.completed && !b.completed) {
+      return (b.uncompletedAt || 0) - (a.uncompletedAt || 0);
+    }
+    return 0;
+  });
+});
+
 onMounted(() => {
   const savedLists = localStorage.getItem("lists");
   if (savedLists) {
@@ -81,6 +96,30 @@ watch(
       `tasks_${currentList.value.id}`,
       JSON.stringify(newTasks),
     );
+  },
+  { deep: true },
+);
+
+watch(
+  () => tasks.value.map((task) => ({ id: task.id, completed: task.completed })),
+  (newValues, oldValues) => {
+    if (!oldValues) return;
+
+    newValues.forEach((newValue, index) => {
+      const oldValue = oldValues[index];
+      if (oldValue && newValue.completed !== oldValue.completed) {
+        const task = tasks.value.find((t) => t.id === newValue.id);
+        if (task) {
+          if (newValue.completed) {
+            task.completedAt = Date.now();
+            delete task.uncompletedAt;
+          } else {
+            task.uncompletedAt = Date.now();
+            delete task.completedAt;
+          }
+        }
+      }
+    });
   },
   { deep: true },
 );
