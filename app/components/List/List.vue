@@ -30,18 +30,64 @@
       <li
         v-for="task in sortedTasks"
         :key="task.id"
-        class="py-2 border-b border-gray-100 flex items-center"
+        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50"
       >
-        <input
-          type="checkbox"
-          v-model="task.completed"
-          class="mr-2 w-4 h-4 appearance-none border border-gray-300 rounded relative cursor-pointer checked:border-0 checked:bg-transparent checked:before:content-['✓'] checked:before:absolute checked:before:top-1/2 checked:before:left-1/2 checked:before:transform checked:before:-translate-x-1/2 checked:before:-translate-y-1/2 checked:before:text-gray-600 checked:before:text-sm checked:before:font-bold"
-        />
-        <span
-          :class="{ 'line-through text-gray-400': task.completed }"
-          class="ml-2"
-          >{{ task.text }}</span
+        <label class="flex items-center flex-1 cursor-pointer">
+          <div v-if="task.completed" class="mr-2">
+            <CheckIcon class="w-4 h-4 text-gray-600" />
+          </div>
+          <input
+            type="checkbox"
+            v-model="task.completed"
+            :class="[
+              'mr-2 appearance-none border rounded relative cursor-pointer',
+              task.completed ? 'hidden' : 'w-4 h-4',
+              task.priority === 'High'
+                ? 'border-red-500'
+                : task.priority === 'Medium'
+                  ? 'border-yellow-500'
+                  : task.priority === 'Low'
+                    ? 'border-blue-500'
+                    : 'border-gray-300',
+            ]"
+            style="accent-color: transparent"
+          />
+          <span
+            :class="{ 'line-through text-gray-400': task.completed }"
+            class="ml-2 flex-1"
+            >{{ task.text }}</span
+          >
+        </label>
+
+        <div
+          class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         >
+          <button
+            @click="setTaskPriority(task)"
+            class="p-1 rounded hover:bg-gray-200 transition-colors"
+            title="Set priority"
+          >
+            <FlagIcon
+              :class="[
+                'w-4 h-4',
+                task.priority === 'High'
+                  ? 'text-red-500'
+                  : task.priority === 'Medium'
+                    ? 'text-yellow-500'
+                    : task.priority === 'Low'
+                      ? 'text-blue-500'
+                      : 'text-gray-500',
+              ]"
+            />
+          </button>
+          <button
+            @click="deleteTask(task.id)"
+            class="p-1 rounded hover:bg-gray-200 transition-colors"
+            title="Delete task"
+          >
+            <TrashIcon class="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
       </li>
     </ul>
     <div class="mt-auto">
@@ -59,6 +105,38 @@
         />
       </div>
     </div>
+
+    <!-- Priority Modal -->
+    <div
+      v-if="showPriorityModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-96">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-sm flex-1 text-center">
+            Set priority
+          </h2>
+          <button
+            @click="showPriorityModal = false"
+            class="p-1 rounded hover:bg-gray-100 transition-colors"
+          >
+            <XMarkIcon class="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div>
+          <button
+            v-for="priority in priorityOptions"
+            :key="priority.value"
+            @click="updateTaskPriority(priority.value)"
+            class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors flex items-center gap-3"
+          >
+            <FlagIcon :class="['w-4 h-4', priority.color]" />
+            <span>{{ priority.label }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -66,6 +144,10 @@
 import {
   PlusCircleIcon as PlusCircleIconSolid,
   TagIcon,
+  FlagIcon,
+  TrashIcon,
+  XMarkIcon,
+  CheckIcon,
 } from "@heroicons/vue/24/outline";
 import { useRoute } from "vue-router";
 
@@ -73,6 +155,15 @@ const route = useRoute();
 
 const tasks = ref([]);
 const currentList = ref({ id: "my-list", name: "My List" });
+const showPriorityModal = ref(false);
+const selectedTask = ref(null);
+
+const priorityOptions = [
+  { value: null, label: "No priority", color: "text-gray-400" },
+  { value: "Low", label: "Low", color: "text-blue-500" },
+  { value: "Medium", label: "Medium", color: "text-yellow-500" },
+  { value: "High", label: "High", color: "text-red-500" },
+];
 
 const sortedTasks = computed(() => {
   return [...tasks.value].sort((a, b) => {
@@ -162,8 +253,26 @@ const addTask = () => {
       id: newId,
       text: newTask.value,
       completed: false,
+      priority: null,
     });
     newTask.value = "";
+  }
+};
+
+const deleteTask = (taskId) => {
+  tasks.value = tasks.value.filter((task) => task.id !== taskId);
+};
+
+const setTaskPriority = (task) => {
+  selectedTask.value = task;
+  showPriorityModal.value = true;
+};
+
+const updateTaskPriority = (priority) => {
+  if (selectedTask.value) {
+    selectedTask.value.priority = priority;
+    showPriorityModal.value = false;
+    selectedTask.value = null;
   }
 };
 </script>
