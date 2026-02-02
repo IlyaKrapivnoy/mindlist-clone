@@ -4,12 +4,26 @@
     <ul class="space-y-1">
       <li v-for="list in lists" :key="list.id">
         <button
-          class="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-sm text-gray-700 hover:text-gray-900 transition-colors duration-150"
+          :class="[
+            'w-full text-left px-2 py-1 rounded text-sm text-gray-700 transition-colors duration-150',
+            (list.id === 'my-list' && route.path === '/') ||
+            (list.id !== 'my-list' && route.path === `/lists/${list.id}`)
+              ? 'bg-gray-200 text-gray-900'
+              : '',
+          ]"
           @click="selectList(list.id)"
         >
-          <div class="flex items-center gap-2">
-            <TagIcon class="w-4 h-4 text-gray-500" />
-            <span>{{ list.name }}</span>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <TagIcon class="w-4 h-4 text-gray-500" />
+              <span>{{ list.name }}</span>
+            </div>
+            <span
+              v-if="getTaskCount(list.id) > 0"
+              class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-[6px] text-xs font-medium"
+            >
+              {{ getTaskCount(list.id) }}
+            </span>
           </div>
         </button>
       </li>
@@ -17,7 +31,7 @@
 
     <!-- New List Button -->
     <button
-      class="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-sm text-gray-700 hover:text-gray-900 transition-colors duration-150 mt-2"
+      class="w-full text-left px-2 py-1 rounded text-sm text-gray-700 transition-colors duration-150 mt-2"
       @click="showNewListModal = true"
     >
       <div class="flex items-center gap-2">
@@ -43,13 +57,13 @@
         <div class="flex justify-end gap-2">
           <button
             @click="showNewListModal = false"
-            class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            class="px-4 py-2 text-gray-600"
           >
             Cancel
           </button>
           <button
             @click="createNewList"
-            class="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors"
+            class="px-4 py-2 bg-gray-800 text-white rounded-md"
           >
             Create
           </button>
@@ -61,14 +75,47 @@
 
 <script setup>
 import { TagIcon, PlusIcon } from "@heroicons/vue/24/outline";
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
+const route = useRoute();
 
 const lists = ref([]);
 const showNewListModal = ref(false);
 const newListName = ref("");
+const taskCounts = ref({});
+
+const getTaskCount = (listId) => {
+  return taskCounts.value[listId] || 0;
+};
+
+const updateTaskCount = (listId) => {
+  const savedTasks = localStorage.getItem(`tasks_${listId}`);
+  if (savedTasks) {
+    const tasks = JSON.parse(savedTasks);
+    taskCounts.value[listId] = tasks.length;
+  } else {
+    taskCounts.value[listId] = 0;
+  }
+};
+
+const updateAllTaskCounts = () => {
+  lists.value.forEach((list) => {
+    updateTaskCount(list.id);
+  });
+};
+
+const watchLocalStorage = () => {
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function (key, value) {
+    originalSetItem.call(this, key, value);
+    if (key.startsWith("tasks_")) {
+      const listId = key.replace("tasks_", "");
+      updateTaskCount(listId);
+    }
+  };
+};
 
 onMounted(() => {
   const savedLists = localStorage.getItem("lists");
@@ -78,6 +125,9 @@ onMounted(() => {
     lists.value = [{ id: "my-list", name: "My List", icon: "tag" }];
     localStorage.setItem("lists", JSON.stringify(lists.value));
   }
+
+  updateAllTaskCounts();
+  watchLocalStorage();
 });
 
 const selectList = (listId) => {
