@@ -30,7 +30,7 @@
       <li
         v-for="task in sortedTasks"
         :key="task.id"
-        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50"
+        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 pl-2"
       >
         <label class="flex items-center flex-1 cursor-pointer">
           <div v-if="task.completed" class="mr-2">
@@ -53,9 +53,28 @@
             style="accent-color: transparent"
           />
           <div class="ml-2 flex-1 flex flex-col">
-            <span :class="{ 'line-through text-gray-400': task.completed }">{{
-              task.text
-            }}</span>
+            <span
+              v-if="editingTask?.id !== task.id"
+              :class="{ 'line-through text-gray-400': task.completed }"
+              >{{ task.text }}</span
+            >
+            <div v-else class="relative">
+              <input
+                v-model="editingText"
+                @keyup.enter="saveEdit"
+                @keyup.esc="cancelEdit"
+                @blur="saveEdit"
+                class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                ref="editInput"
+              />
+              <button
+                @click="saveEdit"
+                class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
+                title="Save changes"
+              >
+                <CheckCircleIcon class="w-5 h-5 text-green-600" />
+              </button>
+            </div>
             <span class="text-[11px] text-gray-400 mt-0.5">
               {{ formatTaskDate(task.createdAt) }}
             </span>
@@ -63,9 +82,19 @@
         </label>
 
         <div
+          v-if="editingTask?.id !== task.id"
           class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         >
           <button
+            v-if="!task.completed"
+            @click="startEdit(task)"
+            class="p-1 rounded hover:bg-gray-200 transition-colors"
+            title="Edit task"
+          >
+            <PencilIcon class="w-4 h-4 text-gray-500" />
+          </button>
+          <button
+            v-if="!task.completed"
             @click="setTaskPriority(task)"
             class="p-1 rounded hover:bg-gray-200 transition-colors"
             title="Set priority"
@@ -151,6 +180,8 @@ import {
   TrashIcon,
   XMarkIcon,
   CheckIcon,
+  PencilIcon,
+  CheckCircleIcon,
 } from "@heroicons/vue/24/outline";
 import { useRoute } from "vue-router";
 
@@ -160,6 +191,8 @@ const tasks = ref([]);
 const currentList = ref({ id: "my-list", name: "My List" });
 const showPriorityModal = ref(false);
 const selectedTask = ref(null);
+const editingTask = ref(null);
+const editingText = ref("");
 
 const priorityOptions = [
   { value: null, label: "No priority", color: "text-gray-400" },
@@ -300,5 +333,30 @@ const formatTaskDate = (timestamp) => {
   });
 
   return formatted.toLowerCase();
+};
+
+const startEdit = (task) => {
+  editingTask.value = task;
+  editingText.value = task.text;
+  nextTick(() => {
+    const input = document.querySelector('input[v-model="editingText"]');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+};
+
+const saveEdit = () => {
+  if (editingTask.value && editingText.value.trim() !== "") {
+    editingTask.value.text = editingText.value.trim();
+  }
+  editingTask.value = null;
+  editingText.value = "";
+};
+
+const cancelEdit = () => {
+  editingTask.value = null;
+  editingText.value = "";
 };
 </script>
