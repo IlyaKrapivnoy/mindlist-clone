@@ -52,11 +52,14 @@
             ]"
             style="accent-color: transparent"
           />
-          <span
-            :class="{ 'line-through text-gray-400': task.completed }"
-            class="ml-2 flex-1"
-            >{{ task.text }}</span
-          >
+          <div class="ml-2 flex-1 flex flex-col">
+            <span :class="{ 'line-through text-gray-400': task.completed }">{{
+              task.text
+            }}</span>
+            <span class="text-[11px] text-gray-400 mt-0.5">
+              {{ formatTaskDate(task.createdAt) }}
+            </span>
+          </div>
         </label>
 
         <div
@@ -194,12 +197,21 @@ onMounted(() => {
 
   const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
   if (savedTasks) {
-    tasks.value = JSON.parse(savedTasks);
+    const parsedTasks = JSON.parse(savedTasks);
+    tasks.value = (Array.isArray(parsedTasks) ? parsedTasks : []).map((t) => ({
+      ...t,
+      createdAt: t.createdAt ?? Date.now(),
+    }));
   } else if (currentList.value.id === "my-list") {
     tasks.value = [
-      { id: 1, text: "Learn Polish", completed: false },
-      { id: 2, text: "Go to the gym", completed: true },
-      { id: 3, text: "Go to the swimming pool", completed: false },
+      { id: 1, text: "Learn Polish", completed: false, createdAt: Date.now() },
+      { id: 2, text: "Go to the gym", completed: true, createdAt: Date.now() },
+      {
+        id: 3,
+        text: "Go to the swimming pool",
+        completed: false,
+        createdAt: Date.now(),
+      },
     ];
   } else {
     tasks.value = [];
@@ -254,6 +266,7 @@ const addTask = () => {
       text: newTask.value,
       completed: false,
       priority: null,
+      createdAt: Date.now(),
     });
     newTask.value = "";
   }
@@ -274,5 +287,18 @@ const updateTaskPriority = (priority) => {
     showPriorityModal.value = false;
     selectedTask.value = null;
   }
+};
+
+const formatTaskDate = (timestamp) => {
+  if (!timestamp) return "";
+
+  const date = new Date(timestamp);
+  const formatted = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return formatted.toLowerCase();
 };
 </script>
