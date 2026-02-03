@@ -5,7 +5,7 @@
       <li v-for="list in lists" :key="list.id">
         <button
           :class="[
-            'w-full text-left px-2 py-1 rounded text-sm text-gray-700 transition-colors duration-150',
+            'w-full text-left px-2 py-2 rounded text-sm text-gray-700 transition-colors duration-150',
             (list.id === 'my-list' && route.path === '/') ||
             (list.id !== 'my-list' && route.path === `/lists/${list.id}`)
               ? 'bg-gray-200 text-gray-900'
@@ -31,7 +31,7 @@
 
     <!-- New List Button -->
     <button
-      class="w-full text-left px-2 py-1 rounded text-sm text-gray-700 transition-colors duration-150 mt-2"
+      class="w-full text-left px-2 py-2 rounded text-sm text-gray-700 transition-colors duration-150 mt-2"
       @click="showNewListModal = true"
     >
       <div class="flex items-center gap-2">

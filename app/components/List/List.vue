@@ -30,7 +30,7 @@
       <li
         v-for="task in sortedTasks"
         :key="task.id"
-        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 pl-2"
+        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
       >
         <label class="flex items-center flex-1 cursor-pointer">
           <div v-if="task.completed" class="mr-2">
@@ -68,7 +68,7 @@
                 ref="editInput"
               />
               <button
-                @click="saveEdit"
+                @click.stop="saveEdit"
                 class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
                 title="Save changes"
               >
