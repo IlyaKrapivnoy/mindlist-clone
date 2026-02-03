@@ -6,8 +6,8 @@
         <button
           :class="[
             'w-full text-left px-2 py-2 rounded text-sm text-gray-700 transition-colors duration-150',
-            (list.id === 'my-list' && route.path === '/') ||
-            (list.id !== 'my-list' && route.path === `/lists/${list.id}`)
+            (list.id === 'main-list' && route.path === '/') ||
+            (list.id !== 'main-list' && route.path === `/lists/${list.id}`)
               ? 'bg-gray-200 text-gray-900'
               : '',
           ]"
@@ -122,16 +122,24 @@ onMounted(() => {
   if (savedLists) {
     lists.value = JSON.parse(savedLists);
   } else {
-    lists.value = [{ id: "my-list", name: "My List", icon: "tag" }];
+    lists.value = [{ id: "main-list", name: "Main" }];
     localStorage.setItem("lists", JSON.stringify(lists.value));
   }
 
-  updateAllTaskCounts();
+  if (!lists.value.find((l) => l.id === "main-list")) {
+    lists.value.unshift({ id: "main-list", name: "Main" });
+    localStorage.setItem("lists", JSON.stringify(lists.value));
+  }
+
+  lists.value.forEach((list) => {
+    updateTaskCount(list.id);
+  });
+
   watchLocalStorage();
 });
 
 const selectList = (listId) => {
-  if (listId === "my-list") {
+  if (listId === "main-list") {
     router.push("/");
   } else {
     router.push(`/lists/${listId}`);

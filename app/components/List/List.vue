@@ -2,9 +2,18 @@
   <div class="p-4 h-screen flex flex-col">
     <!--  header list -->
     <div class="mb-4">
-      <div class="flex gap-2 items-center -mt-[4px]">
-        <TagIcon class="w-5 h-5 text-gray-600" />
-        <h1 class="text-lg font-bold">{{ currentList.name }}</h1>
+      <div class="flex gap-2 items-center justify-between -mt-[4px]">
+        <div class="flex gap-2 items-center">
+          <TagIcon class="w-5 h-5 text-gray-600" />
+          <h1 class="text-lg font-bold">{{ currentList.name }}</h1>
+        </div>
+        <button
+          @click="showListMenuModal = true"
+          class="p-1 rounded hover:bg-gray-100 transition-colors"
+          title="List options"
+        >
+          <EllipsisVerticalIcon class="w-5 h-5 text-gray-500" />
+        </button>
       </div>
       <div class="text-[11px] text-gray-500 pl-[30px]">
         {{ tasks.length }} {{ tasks.length === 1 ? "task" : "tasks" }}
@@ -138,6 +147,63 @@
       </div>
     </div>
 
+    <!-- List Menu Modal -->
+    <div
+      v-if="showListMenuModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-96">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-sm">List options</h2>
+          <button
+            @click="showListMenuModal = false"
+            class="p-1 rounded hover:bg-gray-100 transition-colors"
+          >
+            <XMarkIcon class="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div class="space-y-1">
+          <div
+            v-if="currentList.id === 'main-list' && sortedTasks.length === 0"
+            class="px-3 py-2 text-sm text-gray-500 text-center"
+          >
+            This is your starter list.<br />
+            <span class="font-bold">Create your first task to begin.</span>
+          </div>
+          <template
+            v-if="!(currentList.id === 'main-list' && sortedTasks.length === 0)"
+          >
+            <button
+              @click="clearCompletedTasks"
+              class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors text-sm"
+            >
+              Clear completed tasks
+            </button>
+            <button
+              @click="deleteAllTasks"
+              class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors text-sm"
+            >
+              Delete all tasks
+            </button>
+            <button
+              @click="renameList"
+              class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors text-sm"
+            >
+              Rename list
+            </button>
+            <button
+              v-if="currentList.id !== 'main-list'"
+              @click="deleteList"
+              class="w-full text-left px-3 py-2 rounded hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors text-sm"
+            >
+              Delete list
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- Priority Modal -->
     <div
       v-if="showPriorityModal"
@@ -182,17 +248,20 @@ import {
   CheckIcon,
   PencilIcon,
   CheckCircleIcon,
+  EllipsisVerticalIcon,
 } from "@heroicons/vue/24/outline";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
+const router = useRouter();
 
 const tasks = ref([]);
-const currentList = ref({ id: "my-list", name: "My List" });
+const currentList = ref({ id: "main-list", name: "Main" });
 const showPriorityModal = ref(false);
 const selectedTask = ref(null);
 const editingTask = ref(null);
 const editingText = ref("");
+const showListMenuModal = ref(false);
 
 const priorityOptions = [
   { value: null, label: "No priority", color: "text-gray-400" },
@@ -217,7 +286,7 @@ const sortedTasks = computed(() => {
 });
 
 onMounted(() => {
-  const listId = route.params.id || "my-list";
+  const listId = route.params.id || "main-list";
 
   const savedLists = localStorage.getItem("lists");
   if (savedLists) {
@@ -225,7 +294,23 @@ onMounted(() => {
     const list = lists.find((l) => l.id === listId);
     if (list) {
       currentList.value = list;
+    } else if (listId === "main-list") {
+      currentList.value = { id: "main-list", name: "Main" };
+    } else {
+      currentList.value = {
+        id: listId,
+        name: listId
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
+      };
     }
+  } else if (listId === "main-list") {
+    currentList.value = { id: "main-list", name: "Main" };
+  } else {
+    currentList.value = {
+      id: listId,
+      name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    };
   }
 
   const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
@@ -235,7 +320,7 @@ onMounted(() => {
       ...t,
       createdAt: t.createdAt ?? Date.now(),
     }));
-  } else if (currentList.value.id === "my-list") {
+  } else if (currentList.value.id === "main-list") {
     tasks.value = [
       { id: 1, text: "Learn Polish", completed: false, createdAt: Date.now() },
       { id: 2, text: "Go to the gym", completed: true, createdAt: Date.now() },
@@ -358,5 +443,56 @@ const saveEdit = () => {
 const cancelEdit = () => {
   editingTask.value = null;
   editingText.value = "";
+};
+
+const clearCompletedTasks = () => {
+  tasks.value = tasks.value.filter((task) => !task.completed);
+  showListMenuModal.value = false;
+};
+
+const deleteAllTasks = () => {
+  if (confirm("Are you sure you want to delete all tasks?")) {
+    tasks.value = [];
+    showListMenuModal.value = false;
+  }
+};
+
+const renameList = () => {
+  const newName = prompt("Enter new list name:", currentList.value.name);
+  if (newName && newName.trim() !== "") {
+    currentList.value.name = newName.trim();
+
+    const savedLists = localStorage.getItem("lists");
+    if (savedLists) {
+      const lists = JSON.parse(savedLists);
+      const listIndex = lists.findIndex((l) => l.id === currentList.value.id);
+      if (listIndex !== -1) {
+        lists[listIndex].name = newName.trim();
+        localStorage.setItem("lists", JSON.stringify(lists));
+      }
+    }
+
+    showListMenuModal.value = false;
+  }
+};
+
+const deleteList = () => {
+  if (currentList.value.id === "main-list") {
+    alert("Cannot delete the default list");
+    return;
+  }
+
+  if (confirm("Are you sure you want to delete this list?")) {
+    localStorage.removeItem(`tasks_${currentList.value.id}`);
+
+    const savedLists = localStorage.getItem("lists");
+    if (savedLists) {
+      const lists = JSON.parse(savedLists);
+      const filteredLists = lists.filter((l) => l.id !== currentList.value.id);
+      localStorage.setItem("lists", JSON.stringify(filteredLists));
+    }
+
+    router.push("/");
+  }
 };
 </script>
