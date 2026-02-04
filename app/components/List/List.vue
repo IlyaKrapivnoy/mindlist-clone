@@ -36,120 +36,124 @@
       </div>
     </div>
     <ul v-else class="text-sm">
-      <li
-        v-for="task in sortedTasks"
-        :key="task.id"
-        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
-      >
-        <label class="flex items-center flex-1 cursor-pointer">
-          <div v-if="task.completed" class="mr-2">
-            <CheckIcon class="w-4 h-4 text-gray-600" />
-          </div>
-          <input
-            type="checkbox"
-            v-model="task.completed"
-            :class="[
-              'mr-2 appearance-none border rounded relative cursor-pointer',
-              task.completed ? 'hidden' : 'w-4 h-4',
-              task.priority === 'High'
-                ? 'border-red-500'
-                : task.priority === 'Medium'
-                  ? 'border-yellow-500'
-                  : task.priority === 'Low'
-                    ? 'border-blue-500'
-                    : 'border-gray-300',
-            ]"
-            style="accent-color: transparent"
-          />
-          <div class="ml-2 flex-1 flex flex-col">
-            <span
-              v-if="editingTask?.id !== task.id"
-              :class="{ 'line-through text-gray-400': task.completed }"
-              >{{ task.text }}</span
-            >
-            <div v-else class="relative">
-              <input
-                v-model="editingText"
-                @keyup.enter="saveEdit"
-                @keyup.esc="cancelEdit"
-                @blur="saveEdit"
-                class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
-                ref="editInput"
-              />
-              <button
-                @click.stop="saveEdit"
-                class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
-                title="Save changes"
-              >
-                <CheckCircleIcon class="w-5 h-5 text-green-600" />
-              </button>
-            </div>
-            <span
-              class="text-[11px] mt-0.5"
-              :class="
-                highlightedTasks.has(task.id) ? 'text-red-500' : 'text-gray-400'
-              "
-            >
-              {{ formatTaskDate(task.createdAt) }}
-            </span>
-          </div>
-        </label>
-
-        <div
-          v-if="editingTask?.id !== task.id"
-          class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+      <TransitionGroup name="task-list" tag="div" class="space-y-0">
+        <li
+          v-for="task in sortedTasks"
+          :key="task.id"
+          class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
         >
-          <button
-            v-if="!task.completed"
-            @click="startEdit(task)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Edit task"
-          >
-            <PencilIcon class="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            v-if="!task.completed"
-            @click="setTaskPriority(task)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Set priority"
-          >
-            <FlagIcon
+          <label class="flex items-center flex-1 cursor-pointer">
+            <div v-if="task.completed" class="mr-2">
+              <CheckIcon class="w-4 h-4 text-gray-600" />
+            </div>
+            <input
+              type="checkbox"
+              v-model="task.completed"
               :class="[
-                'w-4 h-4',
+                'mr-2 appearance-none border rounded relative cursor-pointer',
+                task.completed ? 'hidden' : 'w-4 h-4',
                 task.priority === 'High'
-                  ? 'text-red-500'
+                  ? 'border-red-500'
                   : task.priority === 'Medium'
-                    ? 'text-yellow-500'
+                    ? 'border-yellow-500'
                     : task.priority === 'Low'
-                      ? 'text-blue-500'
-                      : 'text-gray-500',
+                      ? 'border-blue-500'
+                      : 'border-gray-300',
               ]"
+              style="accent-color: transparent"
             />
-          </button>
-          <button
-            v-if="!task.completed"
-            @click="toggleTaskHighlight(task.id)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Highlight date"
+            <div class="ml-2 flex-1 flex flex-col">
+              <span
+                v-if="editingTask?.id !== task.id"
+                :class="{ 'line-through text-gray-400': task.completed }"
+                >{{ task.text }}</span
+              >
+              <div v-else class="relative">
+                <input
+                  v-model="editingText"
+                  @keyup.enter="saveEdit"
+                  @keyup.esc="cancelEdit"
+                  @blur="saveEdit"
+                  class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                  ref="editInput"
+                />
+                <button
+                  @click.stop="saveEdit"
+                  class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
+                  title="Save changes"
+                >
+                  <CheckCircleIcon class="w-5 h-5 text-green-600" />
+                </button>
+              </div>
+              <span
+                class="text-[11px] mt-0.5"
+                :class="
+                  highlightedTasks.has(task.id)
+                    ? 'text-red-500'
+                    : 'text-gray-400'
+                "
+              >
+                {{ formatTaskDate(task.createdAt) }}
+              </span>
+            </div>
+          </label>
+
+          <div
+            v-if="editingTask?.id !== task.id"
+            class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
           >
-            <CalendarIcon
-              :class="[
-                'w-4 h-4',
-                highlightedTasks.has(task.id)
-                  ? 'text-red-500'
-                  : 'text-gray-500',
-              ]"
-            />
-          </button>
-          <button
-            @click="deleteTask(task.id)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Delete task"
-          >
-            <TrashIcon class="w-4 h-4 text-gray-500" />
-          </button>
-        </div>
-      </li>
+            <button
+              v-if="!task.completed"
+              @click="startEdit(task)"
+              class="p-1 rounded hover:bg-gray-200 transition-colors"
+              title="Edit task"
+            >
+              <PencilIcon class="w-4 h-4 text-gray-500" />
+            </button>
+            <button
+              v-if="!task.completed"
+              @click="setTaskPriority(task)"
+              class="p-1 rounded hover:bg-gray-200 transition-colors"
+              title="Set priority"
+            >
+              <FlagIcon
+                :class="[
+                  'w-4 h-4',
+                  task.priority === 'High'
+                    ? 'text-red-500'
+                    : task.priority === 'Medium'
+                      ? 'text-yellow-500'
+                      : task.priority === 'Low'
+                        ? 'text-blue-500'
+                        : 'text-gray-500',
+                ]"
+              />
+            </button>
+            <button
+              v-if="!task.completed"
+              @click="toggleTaskHighlight(task.id)"
+              class="p-1 rounded hover:bg-gray-200 transition-colors"
+              title="Highlight date"
+            >
+              <CalendarIcon
+                :class="[
+                  'w-4 h-4',
+                  highlightedTasks.has(task.id)
+                    ? 'text-red-500'
+                    : 'text-gray-500',
+                ]"
+              />
+            </button>
+            <button
+              @click="deleteTask(task.id)"
+              class="p-1 rounded hover:bg-gray-200 transition-colors"
+              title="Delete task"
+            >
+              <TrashIcon class="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+        </li>
+      </TransitionGroup>
     </ul>
     <div class="mt-auto">
       <!-- input list -->
@@ -537,3 +541,27 @@ const deleteList = () => {
   }
 };
 </script>
+
+<style scoped>
+.task-list-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.task-list-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.task-list-move {
+  transition: transform 0.3s ease;
+}
+
+.task-list-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.task-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+</style>
