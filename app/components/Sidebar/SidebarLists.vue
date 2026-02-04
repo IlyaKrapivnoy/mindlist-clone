@@ -136,6 +136,13 @@ onMounted(() => {
   });
 
   watchLocalStorage();
+
+  window.addEventListener("lists-updated", () => {
+    const savedLists = localStorage.getItem("lists");
+    if (savedLists) {
+      lists.value = JSON.parse(savedLists);
+    }
+  });
 });
 
 const selectList = (listId) => {

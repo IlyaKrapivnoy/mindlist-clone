@@ -599,18 +599,21 @@ const deleteList = () => {
     return;
   }
 
-  if (confirm("Are you sure you want to delete this list?")) {
-    localStorage.removeItem(`tasks_${currentList.value.id}`);
+  showListMenuModal.value = false;
 
-    const savedLists = localStorage.getItem("lists");
-    if (savedLists) {
-      const lists = JSON.parse(savedLists);
-      const filteredLists = lists.filter((l) => l.id !== currentList.value.id);
-      localStorage.setItem("lists", JSON.stringify(filteredLists));
-    }
+  localStorage.removeItem(`tasks_${currentList.value.id}`);
+  localStorage.removeItem(`highlightedTasks_${currentList.value.id}`);
 
-    router.push("/");
+  const savedLists = localStorage.getItem("lists");
+  if (savedLists) {
+    const lists = JSON.parse(savedLists);
+    const filteredLists = lists.filter((l) => l.id !== currentList.value.id);
+    localStorage.setItem("lists", JSON.stringify(filteredLists));
+
+    window.dispatchEvent(new CustomEvent("lists-updated"));
   }
+
+  router.push("/");
 };
 </script>
 
