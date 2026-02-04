@@ -306,6 +306,12 @@ const router = useRouter();
 
 const tasks = ref([]);
 const currentList = ref({ id: "main-list", name: "Main" });
+
+useSeoMeta({
+  title: () => `${currentList.value.name} - Task Manager`,
+  description: () =>
+    `Manage your tasks in ${currentList.value.name} list efficiently`,
+});
 const showPriorityModal = ref(false);
 const selectedTask = ref(null);
 const editingTask = ref(null);
