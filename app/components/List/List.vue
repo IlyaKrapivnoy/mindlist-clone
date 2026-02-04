@@ -305,7 +305,7 @@ const sortedTasks = computed(() => {
       return (a.completedAt || 0) - (b.completedAt || 0);
     }
     if (!a.completed && !b.completed) {
-      return (b.uncompletedAt || 0) - (a.uncompletedAt || 0);
+      return b.createdAt - a.createdAt;
     }
     return 0;
   });
