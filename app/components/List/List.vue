@@ -21,140 +21,164 @@
     </div>
 
     <!--  todo list -->
-    <div
-      v-if="sortedTasks.length === 0"
-      class="flex-1 flex flex-col items-center justify-center"
-    >
-      <img
-        src="/assets/images/no_result.png"
-        alt="No tasks"
-        class="max-w-[640px] h-auto"
-      />
-      <div class="text-center text-xs">
-        <p class="text-black font-bold mt-2">It's empty so far</p>
-        <p class="text-gray-500 mt-2">Let's add a new task</p>
-      </div>
-    </div>
-    <ul v-else class="text-sm">
-      <TransitionGroup name="task-list" tag="div" class="space-y-0">
-        <li
-          v-for="task in sortedTasks"
-          :key="task.id"
-          class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
+    <Suspense>
+      <template #default>
+        <div
+          v-if="isLoading"
+          class="flex-1 flex flex-col items-center justify-center"
         >
-          <label class="flex items-center flex-1 cursor-pointer">
-            <div v-if="task.completed" class="mr-2">
-              <CheckIcon class="w-4 h-4 text-gray-600" />
-            </div>
-            <input
-              type="checkbox"
-              v-model="task.completed"
-              :class="[
-                'mr-2 appearance-none border rounded relative cursor-pointer',
-                task.completed ? 'hidden' : 'w-4 h-4',
-                task.priority === 'High'
-                  ? 'border-red-500'
-                  : task.priority === 'Medium'
-                    ? 'border-yellow-500'
-                    : task.priority === 'Low'
-                      ? 'border-blue-500'
-                      : 'border-gray-300',
-              ]"
-              style="accent-color: transparent"
-            />
-            <div class="ml-2 flex-1 flex flex-col">
-              <span
-                v-if="editingTask?.id !== task.id"
-                :class="{ 'line-through text-gray-400': task.completed }"
-                >{{ task.text }}</span
-              >
-              <div v-else class="relative">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mb-4"
+          ></div>
+          <p class="text-gray-500 text-sm">Loading tasks...</p>
+        </div>
+
+        <div
+          v-else-if="sortedTasks.length === 0"
+          class="flex-1 flex flex-col items-center justify-center"
+        >
+          <img
+            src="/assets/images/no_result.png"
+            alt="No tasks"
+            class="max-w-[640px] h-auto"
+          />
+          <div class="text-center text-xs">
+            <p class="text-black font-bold mt-2">It's empty so far</p>
+            <p class="text-gray-500 mt-2">Let's add a new task</p>
+          </div>
+        </div>
+
+        <ul v-else class="text-sm">
+          <TransitionGroup name="task-list" tag="div" class="space-y-0">
+            <li
+              v-for="task in sortedTasks"
+              :key="task.id"
+              class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
+            >
+              <label class="flex items-center flex-1 cursor-pointer">
+                <div v-if="task.completed" class="mr-2">
+                  <CheckIcon class="w-4 h-4 text-gray-600" />
+                </div>
                 <input
-                  v-model="editingText"
-                  @keyup.enter="saveEdit"
-                  @keyup.esc="cancelEdit"
-                  @blur="saveEdit"
-                  class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
-                  ref="editInput"
+                  type="checkbox"
+                  v-model="task.completed"
+                  :class="[
+                    'mr-2 appearance-none border rounded relative cursor-pointer',
+                    task.completed ? 'hidden' : 'w-4 h-4',
+                    task.priority === 'High'
+                      ? 'border-red-500'
+                      : task.priority === 'Medium'
+                        ? 'border-yellow-500'
+                        : task.priority === 'Low'
+                          ? 'border-blue-500'
+                          : 'border-gray-300',
+                  ]"
+                  style="accent-color: transparent"
                 />
+                <div class="ml-2 flex-1 flex flex-col">
+                  <span
+                    v-if="editingTask?.id !== task.id"
+                    :class="{ 'line-through text-gray-400': task.completed }"
+                    >{{ task.text }}</span
+                  >
+                  <div v-else class="relative">
+                    <input
+                      v-model="editingText"
+                      @keyup.enter="saveEdit"
+                      @keyup.esc="cancelEdit"
+                      @blur="saveEdit"
+                      class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                      ref="editInput"
+                    />
+                    <button
+                      @click.stop="saveEdit"
+                      class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
+                      title="Save changes"
+                    >
+                      <CheckCircleIcon class="w-5 h-5 text-green-600" />
+                    </button>
+                  </div>
+                  <span
+                    class="text-[11px] mt-0.5"
+                    :class="
+                      highlightedTasks.has(task.id)
+                        ? 'text-red-500'
+                        : 'text-gray-400'
+                    "
+                  >
+                    {{ formatTaskDate(task.createdAt) }}
+                  </span>
+                </div>
+              </label>
+
+              <div
+                v-if="editingTask?.id !== task.id"
+                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+              >
                 <button
-                  @click.stop="saveEdit"
-                  class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
-                  title="Save changes"
+                  v-if="!task.completed"
+                  @click="startEdit(task)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Edit task"
                 >
-                  <CheckCircleIcon class="w-5 h-5 text-green-600" />
+                  <PencilIcon class="w-4 h-4 text-gray-500" />
+                </button>
+                <button
+                  v-if="!task.completed"
+                  @click="setTaskPriority(task)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Set priority"
+                >
+                  <FlagIcon
+                    :class="[
+                      'w-4 h-4',
+                      task.priority === 'High'
+                        ? 'text-red-500'
+                        : task.priority === 'Medium'
+                          ? 'text-yellow-500'
+                          : task.priority === 'Low'
+                            ? 'text-blue-500'
+                            : 'text-gray-500',
+                    ]"
+                  />
+                </button>
+                <button
+                  v-if="!task.completed"
+                  @click="toggleTaskHighlight(task.id)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Highlight date"
+                >
+                  <CalendarIcon
+                    :class="[
+                      'w-4 h-4',
+                      highlightedTasks.has(task.id)
+                        ? 'text-red-500'
+                        : 'text-gray-500',
+                    ]"
+                  />
+                </button>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Delete task"
+                >
+                  <TrashIcon class="w-4 h-4 text-gray-500" />
                 </button>
               </div>
-              <span
-                class="text-[11px] mt-0.5"
-                :class="
-                  highlightedTasks.has(task.id)
-                    ? 'text-red-500'
-                    : 'text-gray-400'
-                "
-              >
-                {{ formatTaskDate(task.createdAt) }}
-              </span>
-            </div>
-          </label>
+            </li>
+          </TransitionGroup>
+        </ul>
+      </template>
 
+      <template #fallback>
+        <div class="flex-1 flex flex-col items-center justify-center">
           <div
-            v-if="editingTask?.id !== task.id"
-            class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-          >
-            <button
-              v-if="!task.completed"
-              @click="startEdit(task)"
-              class="p-1 rounded hover:bg-gray-200 transition-colors"
-              title="Edit task"
-            >
-              <PencilIcon class="w-4 h-4 text-gray-500" />
-            </button>
-            <button
-              v-if="!task.completed"
-              @click="setTaskPriority(task)"
-              class="p-1 rounded hover:bg-gray-200 transition-colors"
-              title="Set priority"
-            >
-              <FlagIcon
-                :class="[
-                  'w-4 h-4',
-                  task.priority === 'High'
-                    ? 'text-red-500'
-                    : task.priority === 'Medium'
-                      ? 'text-yellow-500'
-                      : task.priority === 'Low'
-                        ? 'text-blue-500'
-                        : 'text-gray-500',
-                ]"
-              />
-            </button>
-            <button
-              v-if="!task.completed"
-              @click="toggleTaskHighlight(task.id)"
-              class="p-1 rounded hover:bg-gray-200 transition-colors"
-              title="Highlight date"
-            >
-              <CalendarIcon
-                :class="[
-                  'w-4 h-4',
-                  highlightedTasks.has(task.id)
-                    ? 'text-red-500'
-                    : 'text-gray-500',
-                ]"
-              />
-            </button>
-            <button
-              @click="deleteTask(task.id)"
-              class="p-1 rounded hover:bg-gray-200 transition-colors"
-              title="Delete task"
-            >
-              <TrashIcon class="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-        </li>
-      </TransitionGroup>
-    </ul>
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mb-4"
+          ></div>
+          <p class="text-gray-500 text-sm">Loading tasks...</p>
+        </div>
+      </template>
+    </Suspense>
     <div class="mt-auto">
       <!-- input list -->
       <div class="relative">
@@ -288,6 +312,7 @@ const editingTask = ref(null);
 const editingText = ref("");
 const showListMenuModal = ref(false);
 const highlightedTasks = ref(new Set());
+const isLoading = ref(true);
 
 const priorityOptions = [
   { value: null, label: "No priority", color: "text-gray-400" },
@@ -311,8 +336,11 @@ const sortedTasks = computed(() => {
   });
 });
 
-onMounted(() => {
+const loadTasksData = async () => {
+  isLoading.value = true;
   const listId = route.params.id || "main-list";
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const savedLists = localStorage.getItem("lists");
   if (savedLists) {
@@ -367,6 +395,13 @@ onMounted(() => {
   } else {
     tasks.value = [];
   }
+
+  isLoading.value = false;
+  return { tasks: tasks.value, currentList: currentList.value };
+};
+
+onMounted(() => {
+  loadTasksData();
 });
 
 watch(
@@ -563,5 +598,45 @@ const deleteList = () => {
 .task-list-leave-to {
   opacity: 0;
   transform: translateX(30px);
+}
+
+.suspense-loading-enter-active {
+  transition: all 0.5s ease-out;
+}
+
+.suspense-loading-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.suspense-loading-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.suspense-loading-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.suspense-content-enter-active {
+  transition: all 0.5s ease-out;
+}
+
+.suspense-content-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
 }
 </style>
