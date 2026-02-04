@@ -304,8 +304,39 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
+const getInitialList = () => {
+  const listId = route.params.id || "main-list";
+
+  if (typeof window === "undefined") {
+    if (listId === "main-list") {
+      return { id: "main-list", name: "Main" };
+    }
+    return {
+      id: listId,
+      name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    };
+  }
+
+  const savedLists = localStorage.getItem("lists");
+
+  if (savedLists) {
+    const lists = JSON.parse(savedLists);
+    const list = lists.find((l) => l.id === listId);
+    if (list) return list;
+  }
+
+  if (listId === "main-list") {
+    return { id: "main-list", name: "Main" };
+  }
+
+  return {
+    id: listId,
+    name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+  };
+};
+
 const tasks = ref([]);
-const currentList = ref({ id: "main-list", name: "Main" });
+const currentList = ref(getInitialList());
 
 useSeoMeta({
   title: () => `${currentList.value.name} - Task Manager`,
@@ -346,8 +377,6 @@ const loadTasksData = async () => {
   isLoading.value = true;
   const listId = route.params.id || "main-list";
 
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
   const savedLists = localStorage.getItem("lists");
   if (savedLists) {
     const lists = JSON.parse(savedLists);
@@ -372,6 +401,8 @@ const loadTasksData = async () => {
       name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     };
   }
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const savedHighlightedTasks = localStorage.getItem(
     `highlightedTasks_${currentList.value.id}`,
