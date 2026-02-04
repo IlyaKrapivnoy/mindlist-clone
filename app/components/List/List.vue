@@ -84,7 +84,12 @@
                 <CheckCircleIcon class="w-5 h-5 text-green-600" />
               </button>
             </div>
-            <span class="text-[11px] text-gray-400 mt-0.5">
+            <span
+              class="text-[11px] mt-0.5"
+              :class="
+                highlightedTasks.has(task.id) ? 'text-red-500' : 'text-gray-400'
+              "
+            >
               {{ formatTaskDate(task.createdAt) }}
             </span>
           </div>
@@ -118,6 +123,21 @@
                     : task.priority === 'Low'
                       ? 'text-blue-500'
                       : 'text-gray-500',
+              ]"
+            />
+          </button>
+          <button
+            v-if="!task.completed"
+            @click="toggleTaskHighlight(task.id)"
+            class="p-1 rounded hover:bg-gray-200 transition-colors"
+            title="Highlight date"
+          >
+            <CalendarIcon
+              :class="[
+                'w-4 h-4',
+                highlightedTasks.has(task.id)
+                  ? 'text-red-500'
+                  : 'text-gray-500',
               ]"
             />
           </button>
@@ -249,6 +269,7 @@ import {
   PencilIcon,
   CheckCircleIcon,
   EllipsisVerticalIcon,
+  CalendarIcon,
 } from "@heroicons/vue/24/outline";
 import { useRoute, useRouter } from "vue-router";
 
@@ -262,6 +283,7 @@ const selectedTask = ref(null);
 const editingTask = ref(null);
 const editingText = ref("");
 const showListMenuModal = ref(false);
+const highlightedTasks = ref(new Set());
 
 const priorityOptions = [
   { value: null, label: "No priority", color: "text-gray-400" },
@@ -311,6 +333,13 @@ onMounted(() => {
       id: listId,
       name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     };
+  }
+
+  const savedHighlightedTasks = localStorage.getItem(
+    `highlightedTasks_${currentList.value.id}`,
+  );
+  if (savedHighlightedTasks) {
+    highlightedTasks.value = new Set(JSON.parse(savedHighlightedTasks));
   }
 
   const savedTasks = localStorage.getItem(`tasks_${currentList.value.id}`);
@@ -443,6 +472,18 @@ const saveEdit = () => {
 const cancelEdit = () => {
   editingTask.value = null;
   editingText.value = "";
+};
+
+const toggleTaskHighlight = (taskId) => {
+  if (highlightedTasks.value.has(taskId)) {
+    highlightedTasks.value.delete(taskId);
+  } else {
+    highlightedTasks.value.add(taskId);
+  }
+  localStorage.setItem(
+    `highlightedTasks_${currentList.value.id}`,
+    JSON.stringify([...highlightedTasks.value]),
+  );
 };
 
 const clearCompletedTasks = () => {
