@@ -55,7 +55,10 @@
               :key="task.id"
               class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
             >
-              <label class="flex items-center flex-1 cursor-pointer">
+              <div
+                class="flex items-center flex-1 cursor-pointer"
+                @click="toggleTaskStatus(task)"
+              >
                 <div v-if="task.completed" class="mr-2">
                   <CheckIcon class="w-4 h-4 text-gray-600" />
                 </div>
@@ -74,6 +77,7 @@
                           : 'border-gray-300',
                   ]"
                   style="accent-color: transparent"
+                  @click.stop
                 />
                 <div class="ml-2 flex-1 flex flex-col">
                   <span
@@ -89,6 +93,7 @@
                       @blur="saveEdit"
                       class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
                       ref="editInput"
+                      @click.stop
                     />
                     <button
                       @click.stop="saveEdit"
@@ -109,7 +114,7 @@
                     {{ formatTaskDate(task.createdAt) }}
                   </span>
                 </div>
-              </label>
+              </div>
 
               <div
                 v-if="editingTask?.id !== task.id"
@@ -560,6 +565,21 @@ const toggleTaskHighlight = (taskId) => {
     `highlightedTasks_${currentList.value.id}`,
     JSON.stringify([...highlightedTasks.value]),
   );
+};
+
+const toggleTaskStatus = (task) => {
+  if (editingTask.value?.id === task.id) {
+    return;
+  }
+
+  task.completed = !task.completed;
+
+  if (task.completed) {
+    task.completedAt = Date.now();
+  } else {
+    task.uncompletedAt = Date.now();
+    delete task.completedAt;
+  }
 };
 
 const clearCompletedTasks = () => {
