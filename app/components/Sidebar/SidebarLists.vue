@@ -156,6 +156,16 @@ const selectList = (listId) => {
 const createNewList = () => {
   if (newListName.value.trim() === "") return;
 
+  const isDuplicate = lists.value.some(
+    (list) =>
+      list.name.toLowerCase().trim() === newListName.value.trim().toLowerCase(),
+  );
+
+  if (isDuplicate) {
+    alert("A list with this name already exists");
+    return;
+  }
+
   const urlName = newListName.value
     .trim()
     .toLowerCase()
