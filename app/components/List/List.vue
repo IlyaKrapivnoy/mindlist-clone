@@ -485,6 +485,16 @@ const newTask = ref("");
 
 const addTask = () => {
   if (newTask.value.trim() !== "") {
+    const isDuplicate = tasks.value.some(
+      (task) =>
+        task.text.toLowerCase().trim() === newTask.value.trim().toLowerCase(),
+    );
+
+    if (isDuplicate) {
+      alert("A task with this text already exists");
+      return;
+    }
+
     const newId =
       tasks.value.length > 0
         ? Math.max(...tasks.value.map((t) => t.id)) + 1
