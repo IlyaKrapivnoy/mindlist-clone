@@ -55,10 +55,7 @@
           @keyup.enter="createNewList"
         />
         <div class="flex justify-end gap-2">
-          <button
-            @click="showNewListModal = false"
-            class="px-4 py-2 text-gray-600"
-          >
+          <button @click="closeModal" class="px-4 py-2 text-gray-600">
             Cancel
           </button>
           <button
@@ -153,6 +150,11 @@ const selectList = (listId) => {
   }
 };
 
+const closeModal = () => {
+  newListName.value = "";
+  showNewListModal.value = false;
+};
+
 const createNewList = () => {
   if (newListName.value.trim() === "") return;
 
@@ -183,9 +185,7 @@ const createNewList = () => {
   lists.value.push(newList);
   localStorage.setItem("lists", JSON.stringify(lists.value));
 
-  newListName.value = "";
-  showNewListModal.value = false;
-
+  closeModal();
   selectList(newId);
 };
 </script>
