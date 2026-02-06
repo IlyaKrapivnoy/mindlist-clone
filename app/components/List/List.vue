@@ -195,7 +195,12 @@
           type="text"
           placeholder="Add new task"
           v-model="newTask"
-          class="w-full pl-10 pr-3 py-2 text-xs text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
+          class="w-full pl-10 pr-10 py-2 text-xs text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
+        />
+        <XMarkIcon
+          v-if="newTask.trim()"
+          @click="clearNewTask"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
         />
       </div>
     </div>
@@ -482,6 +487,10 @@ watch(
 );
 
 const newTask = ref("");
+
+const clearNewTask = () => {
+  newTask.value = "";
+};
 
 const addTask = () => {
   if (newTask.value.trim() !== "") {
