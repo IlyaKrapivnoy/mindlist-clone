@@ -1,19 +1,21 @@
 <template>
-  <div class="p-4 h-screen flex flex-col">
+  <div class="p-4 lg:p-6 h-screen flex flex-col">
     <!--  header list -->
     <div class="mb-4">
-      <div class="flex gap-2 items-center justify-between -mt-[4px]">
+      <div class="flex gap-2 items-center justify-between">
         <div class="flex gap-2 items-center">
-          <TagIcon class="w-5 h-5 text-gray-600" />
-          <h1 class="text-lg font-bold">{{ currentList.name }}</h1>
+          <TagIcon class="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
+          <h1 class="text-base lg:text-lg font-bold">{{ currentList.name }}</h1>
         </div>
-        <button
-          @click="showListMenuModal = true"
-          class="p-1 rounded hover:bg-gray-100 transition-colors"
-          title="List options"
-        >
-          <EllipsisVerticalIcon class="w-5 h-5 text-gray-500" />
-        </button>
+        <div class="flex items-center hidden lg:flex">
+          <button
+            @click="showListMenuModal = true"
+            class="p-1 lg:p-1.5 rounded hover:bg-gray-100 transition-colors"
+            title="List options"
+          >
+            <EllipsisVerticalIcon class="w-4 h-4 lg:w-5 lg:h-5 text-gray-500" />
+          </button>
+        </div>
       </div>
       <div class="text-[11px] text-gray-500 pl-[30px]">
         {{ tasks.length }} {{ tasks.length === 1 ? "task" : "tasks" }}
@@ -40,7 +42,7 @@
           <img
             src="/assets/images/no_result.png"
             alt="No tasks"
-            class="max-w-[640px] h-auto"
+            class="max-w-[640px] w-full lg:w-auto h-auto max-h-[50vh] lg:max-h-none"
           />
           <div class="text-center text-xs">
             <p class="text-black font-bold mt-2">It's empty so far</p>
@@ -53,7 +55,7 @@
             <li
               v-for="task in sortedTasks"
               :key="task.id"
-              class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
+              class="py-1.5 lg:py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-3 lg:px-4"
             >
               <div
                 class="flex items-center flex-1 cursor-pointer"
@@ -195,7 +197,7 @@
           type="text"
           placeholder="Add new task"
           v-model="newTask"
-          class="w-full pl-10 pr-10 py-2 text-xs text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
+          class="w-full pl-10 pr-10 py-2 lg:py-3 text-xs lg:text-sm text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
         />
         <XMarkIcon
           v-if="newTask.trim()"
@@ -211,7 +213,9 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="showListMenuModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-sm">List options</h2>
           <button
@@ -269,7 +273,9 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="showPriorityModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-sm flex-1 text-center">
             Set priority

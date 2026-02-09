@@ -46,7 +46,9 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="showNewListModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <h2 class="text-lg font-semibold mb-4">Create new list</h2>
         <input
           v-model="newListName"
