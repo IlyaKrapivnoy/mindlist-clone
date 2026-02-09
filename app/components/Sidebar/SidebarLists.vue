@@ -44,6 +44,7 @@
     <div
       v-if="showNewListModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showNewListModal = false"
     >
       <div class="bg-white rounded-lg p-6 w-96">
         <h2 class="text-lg font-semibold mb-4">Create new list</h2>

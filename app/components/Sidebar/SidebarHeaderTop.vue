@@ -3,7 +3,7 @@
     <div class="uppercase">{{ currentDay }}</div>
     <div>
       <InformationCircleIcon
-        class="w-5 h-5 cursor-pointer hover:text-gray-800 transition-colors duration-200"
+        class="w-5 h-5 cursor-pointer hover:text-gray-800 transition-colors duration-200 mr-[10px]"
         aria-label="Info"
         title="Info"
         @click="showModal = true"
@@ -18,7 +18,15 @@
     @click.self="showModal = false"
   >
     <div class="bg-white rounded-lg p-6 w-64 shadow-xl">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Info</h3>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Info</h3>
+        <button
+          @click="showModal = false"
+          class="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <XMarkIcon class="w-5 h-5" />
+        </button>
+      </div>
 
       <div class="space-y-3">
         <a
@@ -47,7 +55,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { InformationCircleIcon } from "@heroicons/vue/24/outline";
+import { InformationCircleIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 
 const currentDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
 const showModal = ref(false);

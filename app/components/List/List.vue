@@ -209,6 +209,7 @@
     <div
       v-if="showListMenuModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showListMenuModal = false"
     >
       <div class="bg-white rounded-lg p-6 w-96">
         <div class="flex items-center justify-between mb-4">
@@ -266,6 +267,7 @@
     <div
       v-if="showPriorityModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showPriorityModal = false"
     >
       <div class="bg-white rounded-lg p-6 w-96">
         <div class="flex items-center justify-between mb-4">
