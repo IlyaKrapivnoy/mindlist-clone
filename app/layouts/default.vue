@@ -56,9 +56,11 @@ const toggleSidebar = () => {
 onMounted(() => {
   checkMobile();
   window.addEventListener("resize", checkMobile);
+  window.addEventListener("close-sidebar", toggleSidebar);
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
+  window.removeEventListener("close-sidebar", toggleSidebar);
 });
 </script>

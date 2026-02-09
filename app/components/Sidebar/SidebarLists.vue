@@ -74,12 +74,33 @@
 </template>
 
 <script setup>
-import { TagIcon, PlusIcon } from "@heroicons/vue/24/outline";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { PlusIcon, TagIcon } from "@heroicons/vue/24/outline";
 
 const router = useRouter();
 const route = useRoute();
+
+const isMobile = ref(false);
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 1024;
+};
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
+
+const closeSidebarOnMobile = () => {
+  if (isMobile.value) {
+    window.dispatchEvent(new CustomEvent("close-sidebar"));
+  }
+};
 
 const lists = ref([]);
 const showNewListModal = ref(false);
@@ -151,6 +172,8 @@ const selectList = (listId) => {
   } else {
     router.push(`/lists/${listId}`);
   }
+
+  closeSidebarOnMobile();
 };
 
 const closeModal = () => {
