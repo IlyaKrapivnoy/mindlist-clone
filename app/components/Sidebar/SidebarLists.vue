@@ -44,8 +44,11 @@
     <div
       v-if="showNewListModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showNewListModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <h2 class="text-lg font-semibold mb-4">Create new list</h2>
         <input
           v-model="newListName"
@@ -55,10 +58,7 @@
           @keyup.enter="createNewList"
         />
         <div class="flex justify-end gap-2">
-          <button
-            @click="showNewListModal = false"
-            class="px-4 py-2 text-gray-600"
-          >
+          <button @click="closeModal" class="px-4 py-2 text-gray-600">
             Cancel
           </button>
           <button
@@ -74,12 +74,33 @@
 </template>
 
 <script setup>
-import { TagIcon, PlusIcon } from "@heroicons/vue/24/outline";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { PlusIcon, TagIcon } from "@heroicons/vue/24/outline";
 
 const router = useRouter();
 const route = useRoute();
+
+const isMobile = ref(false);
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 1024;
+};
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
+
+const closeSidebarOnMobile = () => {
+  if (isMobile.value) {
+    window.dispatchEvent(new CustomEvent("close-sidebar"));
+  }
+};
 
 const lists = ref([]);
 const showNewListModal = ref(false);
@@ -136,6 +157,13 @@ onMounted(() => {
   });
 
   watchLocalStorage();
+
+  window.addEventListener("lists-updated", () => {
+    const savedLists = localStorage.getItem("lists");
+    if (savedLists) {
+      lists.value = JSON.parse(savedLists);
+    }
+  });
 });
 
 const selectList = (listId) => {
@@ -144,10 +172,27 @@ const selectList = (listId) => {
   } else {
     router.push(`/lists/${listId}`);
   }
+
+  closeSidebarOnMobile();
+};
+
+const closeModal = () => {
+  newListName.value = "";
+  showNewListModal.value = false;
 };
 
 const createNewList = () => {
   if (newListName.value.trim() === "") return;
+
+  const isDuplicate = lists.value.some(
+    (list) =>
+      list.name.toLowerCase().trim() === newListName.value.trim().toLowerCase(),
+  );
+
+  if (isDuplicate) {
+    alert("A list with this name already exists");
+    return;
+  }
 
   const urlName = newListName.value
     .trim()
@@ -166,9 +211,7 @@ const createNewList = () => {
   lists.value.push(newList);
   localStorage.setItem("lists", JSON.stringify(lists.value));
 
-  newListName.value = "";
-  showNewListModal.value = false;
-
+  closeModal();
   selectList(newId);
 };
 </script>

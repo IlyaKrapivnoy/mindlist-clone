@@ -1,19 +1,21 @@
 <template>
-  <div class="p-4 h-screen flex flex-col">
+  <div class="p-4 lg:p-6 h-screen flex flex-col">
     <!--  header list -->
     <div class="mb-4">
-      <div class="flex gap-2 items-center justify-between -mt-[4px]">
+      <div class="flex gap-2 items-center justify-between">
         <div class="flex gap-2 items-center">
-          <TagIcon class="w-5 h-5 text-gray-600" />
-          <h1 class="text-lg font-bold">{{ currentList.name }}</h1>
+          <TagIcon class="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
+          <h1 class="text-base lg:text-lg font-bold">{{ currentList.name }}</h1>
         </div>
-        <button
-          @click="showListMenuModal = true"
-          class="p-1 rounded hover:bg-gray-100 transition-colors"
-          title="List options"
-        >
-          <EllipsisVerticalIcon class="w-5 h-5 text-gray-500" />
-        </button>
+        <div class="flex items-center hidden lg:flex">
+          <button
+            @click="showListMenuModal = true"
+            class="p-1 lg:p-1.5 rounded hover:bg-gray-100 transition-colors"
+            title="List options"
+          >
+            <EllipsisVerticalIcon class="w-4 h-4 lg:w-5 lg:h-5 text-gray-500" />
+          </button>
+        </div>
       </div>
       <div class="text-[11px] text-gray-500 pl-[30px]">
         {{ tasks.length }} {{ tasks.length === 1 ? "task" : "tasks" }}
@@ -21,136 +23,169 @@
     </div>
 
     <!--  todo list -->
-    <div
-      v-if="sortedTasks.length === 0"
-      class="flex-1 flex flex-col items-center justify-center"
-    >
-      <img
-        src="/assets/images/no_result.png"
-        alt="No tasks"
-        class="max-w-[640px] h-auto"
-      />
-      <div class="text-center text-xs">
-        <p class="text-black font-bold mt-2">It's empty so far</p>
-        <p class="text-gray-500 mt-2">Let's add a new task</p>
-      </div>
-    </div>
-    <ul v-else class="text-sm">
-      <li
-        v-for="task in sortedTasks"
-        :key="task.id"
-        class="py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-4"
-      >
-        <label class="flex items-center flex-1 cursor-pointer">
-          <div v-if="task.completed" class="mr-2">
-            <CheckIcon class="w-4 h-4 text-gray-600" />
-          </div>
-          <input
-            type="checkbox"
-            v-model="task.completed"
-            :class="[
-              'mr-2 appearance-none border rounded relative cursor-pointer',
-              task.completed ? 'hidden' : 'w-4 h-4',
-              task.priority === 'High'
-                ? 'border-red-500'
-                : task.priority === 'Medium'
-                  ? 'border-yellow-500'
-                  : task.priority === 'Low'
-                    ? 'border-blue-500'
-                    : 'border-gray-300',
-            ]"
-            style="accent-color: transparent"
-          />
-          <div class="ml-2 flex-1 flex flex-col">
-            <span
-              v-if="editingTask?.id !== task.id"
-              :class="{ 'line-through text-gray-400': task.completed }"
-              >{{ task.text }}</span
-            >
-            <div v-else class="relative">
-              <input
-                v-model="editingText"
-                @keyup.enter="saveEdit"
-                @keyup.esc="cancelEdit"
-                @blur="saveEdit"
-                class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
-                ref="editInput"
-              />
-              <button
-                @click.stop="saveEdit"
-                class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
-                title="Save changes"
-              >
-                <CheckCircleIcon class="w-5 h-5 text-green-600" />
-              </button>
-            </div>
-            <span
-              class="text-[11px] mt-0.5"
-              :class="
-                highlightedTasks.has(task.id) ? 'text-red-500' : 'text-gray-400'
-              "
-            >
-              {{ formatTaskDate(task.createdAt) }}
-            </span>
-          </div>
-        </label>
+    <Suspense>
+      <template #default>
+        <div
+          v-if="isLoading"
+          class="flex-1 flex flex-col items-center justify-center"
+        >
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mb-4"
+          ></div>
+          <p class="text-gray-500 text-sm">Loading tasks...</p>
+        </div>
 
         <div
-          v-if="editingTask?.id !== task.id"
-          class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+          v-else-if="sortedTasks.length === 0"
+          class="flex-1 flex flex-col items-center justify-center"
         >
-          <button
-            v-if="!task.completed"
-            @click="startEdit(task)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Edit task"
-          >
-            <PencilIcon class="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            v-if="!task.completed"
-            @click="setTaskPriority(task)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Set priority"
-          >
-            <FlagIcon
-              :class="[
-                'w-4 h-4',
-                task.priority === 'High'
-                  ? 'text-red-500'
-                  : task.priority === 'Medium'
-                    ? 'text-yellow-500'
-                    : task.priority === 'Low'
-                      ? 'text-blue-500'
-                      : 'text-gray-500',
-              ]"
-            />
-          </button>
-          <button
-            v-if="!task.completed"
-            @click="toggleTaskHighlight(task.id)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Highlight date"
-          >
-            <CalendarIcon
-              :class="[
-                'w-4 h-4',
-                highlightedTasks.has(task.id)
-                  ? 'text-red-500'
-                  : 'text-gray-500',
-              ]"
-            />
-          </button>
-          <button
-            @click="deleteTask(task.id)"
-            class="p-1 rounded hover:bg-gray-200 transition-colors"
-            title="Delete task"
-          >
-            <TrashIcon class="w-4 h-4 text-gray-500" />
-          </button>
+          <img
+            src="/assets/images/no_result.png"
+            alt="No tasks"
+            class="max-w-[640px] w-full lg:w-auto h-auto max-h-[50vh] lg:max-h-none"
+          />
+          <div class="text-center text-xs">
+            <p class="text-black font-bold mt-2">It's empty so far</p>
+            <p class="text-gray-500 mt-2">Let's add a new task</p>
+          </div>
         </div>
-      </li>
-    </ul>
+
+        <ul v-else class="text-sm">
+          <TransitionGroup name="task-list" tag="div" class="space-y-0">
+            <li
+              v-for="task in sortedTasks"
+              :key="task.id"
+              class="py-1.5 lg:py-2 border-b border-gray-100 flex items-center group hover:bg-gray-50 px-3 lg:px-4"
+            >
+              <div
+                class="flex items-center flex-1 cursor-pointer"
+                @click="toggleTaskStatus(task)"
+              >
+                <div v-if="task.completed" class="mr-2">
+                  <CheckIcon class="w-4 h-4 text-gray-600" />
+                </div>
+                <input
+                  type="checkbox"
+                  v-model="task.completed"
+                  :class="[
+                    'mr-2 appearance-none border rounded relative cursor-pointer',
+                    task.completed ? 'hidden' : 'w-4 h-4',
+                    task.priority === 'High'
+                      ? 'border-red-500'
+                      : task.priority === 'Medium'
+                        ? 'border-yellow-500'
+                        : task.priority === 'Low'
+                          ? 'border-blue-500'
+                          : 'border-gray-300',
+                  ]"
+                  style="accent-color: transparent"
+                  @click.stop
+                />
+                <div class="ml-2 flex-1 flex flex-col">
+                  <span
+                    v-if="editingTask?.id !== task.id"
+                    :class="{ 'line-through text-gray-400': task.completed }"
+                    >{{ task.text }}</span
+                  >
+                  <div v-else class="relative">
+                    <input
+                      v-model="editingText"
+                      @keyup.enter="saveEdit"
+                      @keyup.esc="cancelEdit"
+                      @blur="saveEdit"
+                      class="w-[90%] text-sm border border-gray-300 rounded px-1 py-0.5 pr-12 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                      ref="editInput"
+                      @click.stop
+                    />
+                    <button
+                      @click.stop="saveEdit"
+                      class="absolute right-1 top-1/2 transform -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 transition-colors"
+                      title="Save changes"
+                    >
+                      <CheckCircleIcon class="w-5 h-5 text-green-600" />
+                    </button>
+                  </div>
+                  <span
+                    class="text-[11px] mt-0.5"
+                    :class="
+                      highlightedTasks.has(task.id)
+                        ? 'text-red-500'
+                        : 'text-gray-400'
+                    "
+                  >
+                    {{ formatTaskDate(task.createdAt) }}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                v-if="editingTask?.id !== task.id"
+                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+              >
+                <button
+                  v-if="!task.completed"
+                  @click="startEdit(task)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Edit task"
+                >
+                  <PencilIcon class="w-4 h-4 text-gray-500" />
+                </button>
+                <button
+                  v-if="!task.completed"
+                  @click="setTaskPriority(task)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Set priority"
+                >
+                  <FlagIcon
+                    :class="[
+                      'w-4 h-4',
+                      task.priority === 'High'
+                        ? 'text-red-500'
+                        : task.priority === 'Medium'
+                          ? 'text-yellow-500'
+                          : task.priority === 'Low'
+                            ? 'text-blue-500'
+                            : 'text-gray-500',
+                    ]"
+                  />
+                </button>
+                <button
+                  v-if="!task.completed"
+                  @click="toggleTaskHighlight(task.id)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Highlight date"
+                >
+                  <CalendarIcon
+                    :class="[
+                      'w-4 h-4',
+                      highlightedTasks.has(task.id)
+                        ? 'text-red-500'
+                        : 'text-gray-500',
+                    ]"
+                  />
+                </button>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="p-1 rounded hover:bg-gray-200 transition-colors"
+                  title="Delete task"
+                >
+                  <TrashIcon class="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </li>
+          </TransitionGroup>
+        </ul>
+      </template>
+
+      <template #fallback>
+        <div class="flex-1 flex flex-col items-center justify-center">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mb-4"
+          ></div>
+          <p class="text-gray-500 text-sm">Loading tasks...</p>
+        </div>
+      </template>
+    </Suspense>
     <div class="mt-auto">
       <!-- input list -->
       <div class="relative">
@@ -162,7 +197,12 @@
           type="text"
           placeholder="Add new task"
           v-model="newTask"
-          class="w-full pl-10 pr-3 py-2 text-xs text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
+          class="w-full pl-10 pr-10 py-2 lg:py-3 text-xs lg:text-sm text-black placeholder:text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
+        />
+        <XMarkIcon
+          v-if="newTask.trim()"
+          @click="clearNewTask"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
         />
       </div>
     </div>
@@ -171,8 +211,11 @@
     <div
       v-if="showListMenuModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showListMenuModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-sm">List options</h2>
           <button
@@ -228,8 +271,11 @@
     <div
       v-if="showPriorityModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showPriorityModal = false"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div
+        class="bg-white rounded-lg p-4 lg:p-6 w-11/12 lg:w-96 max-w-md shadow-xl"
+      >
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-sm flex-1 text-center">
             Set priority
@@ -276,14 +322,52 @@ import { useRoute, useRouter } from "vue-router";
 const route = useRoute();
 const router = useRouter();
 
+const getInitialList = () => {
+  const listId = route.params.id || "main-list";
+
+  if (typeof window === "undefined") {
+    if (listId === "main-list") {
+      return { id: "main-list", name: "Main" };
+    }
+    return {
+      id: listId,
+      name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    };
+  }
+
+  const savedLists = localStorage.getItem("lists");
+
+  if (savedLists) {
+    const lists = JSON.parse(savedLists);
+    const list = lists.find((l) => l.id === listId);
+    if (list) return list;
+  }
+
+  if (listId === "main-list") {
+    return { id: "main-list", name: "Main" };
+  }
+
+  return {
+    id: listId,
+    name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+  };
+};
+
 const tasks = ref([]);
-const currentList = ref({ id: "main-list", name: "Main" });
+const currentList = ref(getInitialList());
+
+useSeoMeta({
+  title: () => `${currentList.value.name} - Task Manager`,
+  description: () =>
+    `Manage your tasks in ${currentList.value.name} list efficiently`,
+});
 const showPriorityModal = ref(false);
 const selectedTask = ref(null);
 const editingTask = ref(null);
 const editingText = ref("");
 const showListMenuModal = ref(false);
 const highlightedTasks = ref(new Set());
+const isLoading = ref(true);
 
 const priorityOptions = [
   { value: null, label: "No priority", color: "text-gray-400" },
@@ -301,13 +385,14 @@ const sortedTasks = computed(() => {
       return (a.completedAt || 0) - (b.completedAt || 0);
     }
     if (!a.completed && !b.completed) {
-      return (b.uncompletedAt || 0) - (a.uncompletedAt || 0);
+      return b.createdAt - a.createdAt;
     }
     return 0;
   });
 });
 
-onMounted(() => {
+const loadTasksData = async () => {
+  isLoading.value = true;
   const listId = route.params.id || "main-list";
 
   const savedLists = localStorage.getItem("lists");
@@ -334,6 +419,8 @@ onMounted(() => {
       name: listId.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     };
   }
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const savedHighlightedTasks = localStorage.getItem(
     `highlightedTasks_${currentList.value.id}`,
@@ -363,6 +450,13 @@ onMounted(() => {
   } else {
     tasks.value = [];
   }
+
+  isLoading.value = false;
+  return { tasks: tasks.value, currentList: currentList.value };
+};
+
+onMounted(() => {
+  loadTasksData();
 });
 
 watch(
@@ -402,8 +496,22 @@ watch(
 
 const newTask = ref("");
 
+const clearNewTask = () => {
+  newTask.value = "";
+};
+
 const addTask = () => {
   if (newTask.value.trim() !== "") {
+    const isDuplicate = tasks.value.some(
+      (task) =>
+        task.text.toLowerCase().trim() === newTask.value.trim().toLowerCase(),
+    );
+
+    if (isDuplicate) {
+      alert("A task with this text already exists");
+      return;
+    }
+
     const newId =
       tasks.value.length > 0
         ? Math.max(...tasks.value.map((t) => t.id)) + 1
@@ -486,6 +594,21 @@ const toggleTaskHighlight = (taskId) => {
   );
 };
 
+const toggleTaskStatus = (task) => {
+  if (editingTask.value?.id === task.id) {
+    return;
+  }
+
+  task.completed = !task.completed;
+
+  if (task.completed) {
+    task.completedAt = Date.now();
+  } else {
+    task.uncompletedAt = Date.now();
+    delete task.completedAt;
+  }
+};
+
 const clearCompletedTasks = () => {
   tasks.value = tasks.value.filter((task) => !task.completed);
   showListMenuModal.value = false;
@@ -523,17 +646,84 @@ const deleteList = () => {
     return;
   }
 
-  if (confirm("Are you sure you want to delete this list?")) {
-    localStorage.removeItem(`tasks_${currentList.value.id}`);
+  showListMenuModal.value = false;
 
-    const savedLists = localStorage.getItem("lists");
-    if (savedLists) {
-      const lists = JSON.parse(savedLists);
-      const filteredLists = lists.filter((l) => l.id !== currentList.value.id);
-      localStorage.setItem("lists", JSON.stringify(filteredLists));
-    }
+  localStorage.removeItem(`tasks_${currentList.value.id}`);
+  localStorage.removeItem(`highlightedTasks_${currentList.value.id}`);
 
-    router.push("/");
+  const savedLists = localStorage.getItem("lists");
+  if (savedLists) {
+    const lists = JSON.parse(savedLists);
+    const filteredLists = lists.filter((l) => l.id !== currentList.value.id);
+    localStorage.setItem("lists", JSON.stringify(filteredLists));
+
+    window.dispatchEvent(new CustomEvent("lists-updated"));
   }
+
+  router.push("/");
 };
 </script>
+
+<style scoped>
+.task-list-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.task-list-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.task-list-move {
+  transition: transform 0.3s ease;
+}
+
+.task-list-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.task-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.suspense-loading-enter-active {
+  transition: all 0.5s ease-out;
+}
+
+.suspense-loading-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.suspense-loading-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.suspense-loading-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.suspense-content-enter-active {
+  transition: all 0.5s ease-out;
+}
+
+.suspense-content-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+</style>
